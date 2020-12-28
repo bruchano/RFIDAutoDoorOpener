@@ -101,7 +101,6 @@ void loop() {
     delay(T2);
     if (state == 1 && x < n) {
       x++;
-      Serial.println(x);
       return;
     }
     if (state == 1 && x == n) {
