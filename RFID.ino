@@ -34,6 +34,8 @@ int MotorPort = 9;
 Servo motor;
 
 int state = 0;
+int x = 0;
+int n = 5000 / T2;
 
 void Pass() {
   Serial.println("Access Accepted");
@@ -97,9 +99,20 @@ void setup() {
 void loop() {
   if (!reader.PICC_IsNewCardPresent() || !reader.PICC_ReadCardSerial()) {
     delay(T2);
+    if (state == 1 && x < n) {
+      x++;
+      Serial.println(x);
+      return;
+    }
+    if (state == 1 && x == n) {
+      state = 0;
+      x = 0;
+      return;
+    }
     return;
   }
 
+  x = 0;
   reader.PICC_HaltA();
   
   unknown_card = "";
