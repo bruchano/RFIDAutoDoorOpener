@@ -3,12 +3,10 @@
 #include <pitches.h>
 #include <Servo.h>
 #include <Dictionary.h>
+#include <LiquidCrystal.h>
 
 #define SDApin 53
-#define SCKpin 52
-#define MOSIpin 51
-#define MISOpin 50
-#define RSTpin 5
+#define RSTpin 8
 
 int R = 4;
 int G = 3;
@@ -30,15 +28,40 @@ int melody[] = {
   NOTE_D5, NOTE_A2, NOTE_C6
   };
 
-int MotorPort = 9;
+int MotorPort = 11;
 Servo motor;
+
+int RS = 22;
+int E = 24;
+int D4 = 28;
+int D5 = 30;
+int D6 = 32;
+int D7 = 34;
+
+LiquidCrystal *LCD = new LiquidCrystal(RS, E, D4, D5, D6, D7);
 
 int state = 0;
 int x = 0;
 int n = 5000 / T2;
 
+void Draw(int row, String x) {
+  LCD->setCursor(0, row);
+  LCD->print(x);
+}
+
+void DrawAll(int row, String x) {
+  LCD->clear();
+  LCD->setCursor(0, row);
+  LCD->print(x);
+}
+
+void Clear(int i) {
+  LCD->setCursor(0, i);
+  LCD->print("                ");
+}
+
 void Pass() {
-  Serial.println("Access Accepted");
+  DrawAll(0, "Access Accepted");
   digitalWrite(G, HIGH);
   tone(BuzzPort, melody[0], T2);
   motor.write(180);
@@ -49,7 +72,7 @@ void Pass() {
 }
 
 void Deny() {
-  Serial.println("Access Denied");
+  DrawAll(0, "Access Denied");
   digitalWrite(R, HIGH);
   tone(BuzzPort, melody[1], T2);
   delay(T2);
@@ -57,7 +80,7 @@ void Deny() {
 }
 
 void Add_New() {
-  Serial.println("Adding New");
+  DrawAll(0, "Adding New ID");
   digitalWrite(B, HIGH);
   tone(BuzzPort, melody[2], T2);
   delay(T2);
@@ -65,7 +88,7 @@ void Add_New() {
 }
 
 void Add(String i) {
-  Serial.println("New Card Added");
+  DrawAll(0, "New ID Added");
   Users(i, "1");
   digitalWrite(R, HIGH);
   digitalWrite(G, HIGH);
@@ -74,7 +97,7 @@ void Add(String i) {
   delay(T2);
   digitalWrite(R, LOW);
   digitalWrite(G, LOW);
-  digitalWrite(B, LOW);;
+  digitalWrite(B, LOW);
 }
 
 void setup() {
@@ -90,20 +113,31 @@ void setup() {
   
   motor.attach(MotorPort);
   motor.write(0);
-
+  
+  LCD->begin(16, 2);
+  
   SPI.begin();
   reader.PCD_Init();
 
 }
 
 void loop() {
+
   if (!reader.PICC_IsNewCardPresent() || !reader.PICC_ReadCardSerial()) {
     delay(T2);
+    if (state != 2) {
+      Draw(0, "Present Valid ID");
+    } 
+    
     if (state == 1 && x < n) {
       x++;
+      if (x * T2 / 1000 != 0) {
+        Draw(1, String(x * T2 / 1000));
+      }
       return;
     }
     if (state == 1 && x == n) {
+      Clear(1);
       state = 0;
       x = 0;
       return;
